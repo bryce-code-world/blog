@@ -1,0 +1,49 @@
+
+	// 参考文档：https://www.cnblogs.com/eline2018/p/10366549.html
+
+	特性：
+		1. 分表后查找数据依然可以在所有表中查询，且能排序；
+		2. 分表后，每个分表ID是接着上一个分表的最后ID连续的；
+		3. 分表后，查询数据时，默认不会按照 ID 排序，会直接从各个表取出符合条件的数据直接一起返回，此时无序状态；
+		4. 分表后，可以设置 merge 表在插入数据时，将数据插入最新的表；
+	
+	
+	MERGE 存储引擎把一组 MyISAM 数据表当做一个逻辑单元来对待，让我们可以同时对他们进行查询。构成一个 MERGE 数据表结构的各成员 MyISAM 数据表必须具有完全一样的表结构。每一个成员数据表的数据列必须按照同样的顺序定义同样的名字和类型，索引也必须按照同样的顺序和同样的方式定义。假设你有几个日志数据表，他们内容分别是这几年来每一年的日志记录项，他们的定义都是下面这样，YY 代表年份
+
+	CREATE TABLE log_YY (
+		dt DATETIME NOT NULL,
+		info VARCHAR(100) NOT NULL,
+		INDEX (dt)
+	) ENGINE = MyISAM;
+	
+	　　假设日志数据表的当前集合包括 log_2004、log_2005、log_2006、log_2007 ，而你可以创建一个如下所示的 MERGE 数据表把他们归拢为一个逻辑单元：
+
+	CREATE TABLE log_merge (
+		dt DATETIME NOT NULL,
+		info VARCHAR(100) NOT NULL,
+		INDEX(dt)
+	) ENGINE = MERGE UNION = (log_2004, log_2005, log_2006, log_2007);
+	
+	　　ENGINE 选项的值必须是 MERGE，UNION 选项列出了将被收录在这个 MERGE 数据表离得各有关数据表。把这个 MERGE 创建出来后，就可以像对待任何其他数据表那样查询它，只是每一次查询都将同时作用与构成它的每一个成员数据表 。下面这个查询可以让我们知道上述几个日志数据表的数据行的总数：
+
+	SELECT COUNT（*）FROM log_merge;
+	　　下面这个查询用来确定在这几年里每年各有多少日志记录项：
+
+	SELECT YEAR(dt) AS y, COUNT(*) AS entries FROM log_merge GROUP BY y;
+	　　除了便于同时引用多个数据表而无需发出多条查询，MERGE 数据表还提供了以下一些便利。
+
+	　　1）、MERGE 数据表可以用来创建一个尺寸超过各个 MyISAM 数据表所允许的最大长度逻辑单元
+	　　2）、经过压缩的数据表包括到 MERGE 数据表里。比如说，在某一年结束之后，你应该不会再往相应的日志文件里添加记录，所以你可以用 myisampack 工具压缩它以节省空间，而 MERGE 数据表仍可以像往常那样工作
+	　　3）、MERGE 数据表也支持 DELETE 和 UPDATE 操作。INSERT 操作比较麻烦，因为 MySQL 需要知道应该把新数据行插入到哪一个成员表里去。在 MERGE 数据表的定义里可以包括一个 INSERT_METHOD 选项，这个选项的可取值是 NO、FIRST、LAST，他们的含义依次是 INSERT操作是被禁止的、新数据行将被插入到现在 UNION 选项里列出的第一个数据表或最后一个数据表。比如说，以下定义将对 log_merge 数据表的 INSERT 操作被当作对 log_2007 数据表----它是 UNION 选项所列出的最后一个数据表：
+
+
+	CREATE TABLE log_merge(
+		dt DATETIME NOT NULL,
+		info VARCHAR(100) NOT NULL,
+		INDEX(dt)
+	) ENGINE = MERGE UNION = (log_2004, log_2005, log_2006, log_2007) INSERT_METHOD = LAST;
+	
+	创建一个新的成员数据表 log_2009 并让他有同样的表结构，然后修改 log_merge 数据表把 log_2009 包括进来：log_2009:
+
+	CREATE TABLE log_2009 LIKE log_2008; //根据旧表创建新表
+	ALTER TABLE log_merge UNION = (log_2004, log_2005, log_2006,log_2007,log_2008,log_2009);

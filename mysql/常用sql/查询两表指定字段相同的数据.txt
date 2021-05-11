@@ -1,0 +1,16 @@
+SELECT
+	a.id AS a_id,
+	a.type,
+	a.batch,
+	a.uuid,
+	FROM_UNIXTIME(time, '%Y/%m/%d %H:%i:%s') date,
+	b.id AS b_id,
+	b.uuid,
+	b.sn,
+	b.mac
+INTO OUTFILE / home / ubuntu / test.xlsx
+FROM
+	factory a,
+	facility b
+WHERE
+	a.uuid = b.uuid

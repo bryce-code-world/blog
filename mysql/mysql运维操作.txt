@@ -1,0 +1,9 @@
+
+
+	1. 查看mysql目前正在运行的所有sql语句
+	
+		show [full] processlist;
+		
+	
+	
+		

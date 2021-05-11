@@ -1,0 +1,51 @@
+
+
+	1. 查看指定表已创建的索引：show keys from table_name;  或  show index from tblname;
+	
+	2. 创建普通索引：create index index_name on t1(column_name);
+	
+	3. 创建联合索引：create index index_name on t1(column1_name,column2_name,……);
+	
+	4．ALTER TABLE创建创建普通索引、UNIQUE索引或PRIMARY KEY索引
+
+		（1）ALTER TABLE table_name ADD INDEX index_name (column_list)
+
+		（2）ALTER TABLE table_name ADD UNIQUE (column_list)
+
+		（3）ALTER TABLE table_name ADD PRIMARY KEY (column_list)
+		
+		其中table_name是要增加索引的表名，column_list指出对哪些列进行索引，多列时各列之间用逗号分隔。
+		索引名index_name可选，缺省时，MySQL将根据第一个索引列赋一个名称。
+		另外，ALTER TABLE允许在单个语句中更改多个表，因此可以在同时创建多个索引。
+	
+	5．CREATE INDEX 增加普通索引或UNIQUE索引。
+		 
+		（1）CREATE INDEX index_name ON table_name (column_list)
+
+		（2）CREATE UNIQUE INDEX index_name ON table_name (column_list)
+
+		table_name、index_name和column_list具有与ALTER TABLE语句中相同的含义，索引名不可选。
+		另外，不能用CREATE INDEX语句创建PRIMARY KEY索引。
+		
+	【索引类型】
+		（1）在创建索引时，可以规定索引能否包含重复值。
+			如果不包含，则索引应该创建为PRIMARY KEY或UNIQUE索引。
+			对于单列惟一性索引，这保证单列不包含重复的值。
+			对于多列惟一性索引，保证多个值的组合不重复。
+
+		（2）PRIMARY KEY索引和UNIQUE索引非常类似。
+			事实上，PRIMARY KEY索引仅是一个具有名称PRIMARY的UNIQUE索引。
+			这表示一个表只能包含一个PRIMARY KEY，因为一个表中不可能具有两个同名的索引。
+
+			如：对students表在sid上添加PRIMARY KEY索引：ALTER TABLE students ADD PRIMARY KEY (sid)
+			
+	6.  删除索引
+	
+		可利用ALTER TABLE或DROP INDEX语句来删除索引。
+		类似于CREATE INDEX语句，DROP INDEX可以在ALTER TABLE内部作为一条语句处理，语法如下：
+
+		（1）DROP INDEX index_name ON talbe_name
+
+		（2）ALTER TABLE table_name DROP INDEX index_name
+
+		（3）ALTER TABLE table_name DROP PRIMARY KEY
